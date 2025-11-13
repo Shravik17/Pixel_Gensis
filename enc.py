@@ -166,4 +166,4 @@ if __name__ == "__main__":
     public_keys = vault.export_public_keys()
     for field, key in public_keys.items():
         print(f"\n{field.upper()} Public Key:")
-        print(key[:100] + "...")
+        print(key)
