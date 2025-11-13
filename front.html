@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> MINTNCHIP Decentralized Identity Vault - Login</title>
+  <style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background-color: #DDFCDC;      /* pastel mint */
+  color: #5C4033;                 /* dark choco brown */
+}
+header {
+  background-color: #382513;      /* extra dark brown */
+  padding: 10px;
+  color: #F7FFF7;                 /* creamy white */
+  text-align: center;
+}
+section {
+  margin-top: 30px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #E8FFF1;            /* lighter mint */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.08);
+  color: #5C4033;
+}
+label {
+  font-weight: bold;
+  color: #5C4033;                 /* chocolate brown for label */
+}
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #8AB878;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: #F7FFF7;            /* creamy white, matches header text */
+  color: #5C4033;
+}
+input:focus {
+  border: 1.5px solid #5C4033;
+  outline: none;
+}
+button {
+  width: 100%;
+  background-color: #5C4033;
+  color: #DDFCDC;
+  border: none;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+button:hover {
+  background-color: #382513;
+}
+a {
+  text-decoration: none;
+  color: #2a9d8f;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+a:hover {
+  color: #21867a;
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Decentralized Identity Vault</h1>
+  </header>
+
+  <section id="login-section">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required />
+
+      <button type="submit">Log In</button>
+    </form>
+    <div style="text-align:center;margin-top:10px;">
+      <a href="signup.html">Don’t have an account? Sign Up</a>
+    </div>
+  </section>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = e.target.username.value;
+      localStorage.setItem('dappUsername', username);
+      window.location.href = 'dashboard.html';
+    });
+  </script>
+</body>
+</html>
