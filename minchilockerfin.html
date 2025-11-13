@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinchiLocker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #d4f1e8 0%, #a8e6cf 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: #3d2817;
+            margin-bottom: 40px;
+        }
+
+        .mint-leaf {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: 2px solid #5d4037;
+            background: rgba(93, 64, 55, 0.1);
+            color: #3d2817;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .mode-btn:hover {
+            background: rgba(93, 64, 55, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .mode-btn.active {
+            background: #5d4037;
+            color: #d4f1e8;
+            font-weight: bold;
+        }
+
+        .mode-content {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .mode-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            color: #5d4037;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #5d4037;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #5d4037;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button[type="submit"], .auth-btn {
+            background: linear-gradient(135deg, #5d4037 0%, #3d2817 100%);
+            color: #d4f1e8;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(93, 64, 55, 0.3);
+        }
+
+        button[type="submit"]:hover, .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(93, 64, 55, 0.5);
+        }
+
+        .output-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f0faf7;
+            border-radius: 8px;
+            border-left: 4px solid #5d4037;
+            display: none;
+        }
+
+        .output-box.show {
+            display: block;
+        }
+
+        .output-box h3 {
+            color: #5d4037;
+            margin-bottom: 10px;
+        }
+
+        .output-box pre {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .error-msg {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .success-msg {
+            color: #2e7d32;
+            background: #e8f5e9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .auth-screen, .main-screen {
+            display: none;
+        }
+
+        .auth-screen.active, .main-screen.active {
+            display: block;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 20px;
+            color: #5d4037;
+        }
+
+        .toggle-auth a {
+            color: #5d4037;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .toggle-auth a:hover {
+            color: #3d2817;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .mode-btn {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="mint-leaf">🌿</div>
+            <h1>MinchiLocker</h1>
+            <p>Secure, Private, and Self-Sovereign Data Ownership</p>
+        </header>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('user')">User</button>
+            <button class="mode-btn" onclick="switchMode('institution')">Institution</button>
+            <button class="mode-btn" onclick="switchMode('thirdparty')">Third Party Verifier</button>
+        </div>
+
+        <!-- User Mode -->
+        <div id="user-mode" class="mode-content active">
+            <h2>User Portal</h2>
+            
+            <!-- Login Screen -->
+            <div id="user-auth" class="auth-screen active">
+                <div id="user-login" class="auth-form active">
+                    <h3>Login</h3>
+                    <div id="user-login-msg"></div>
+                    <form onsubmit="handleUserLogin(event)">
+                        <div class="form-group">
+                            <label for="user-login-username">Username</label>
+                            <input type="text" id="user-login-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-login-password">Password</label>
+                            <input type="password" id="user-login-password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Login</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Don't have an account? <a onclick="toggleUserAuth()">Sign Up</a>
+                    </div>
+                </div>
+
+                <div id="user-signup" class="auth-form" style="display: none;">
+                    <h3>Create Account</h3>
+                    <div id="user-signup-msg"></div>
+                    <form onsubmit="handleUserSignup(event)">
+                        <div class="form-group">
+                            <label for="user-signup-username">Username</label>
+                            <input type="text" id="user-signup-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-signup-password">Password</label>
+                            <input type="password" id="user-signup-password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Sign Up</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Already have an account? <a onclick="toggleUserAuth()">Login</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Screen -->
+            <div id="user-main" class="main-screen">
+                <div class="success-msg">Logged in as <strong id="user-logged-username"></strong> | <a href="#" onclick="logoutUser()" style="color: #2e7d32; font-weight: 600;">Logout</a></div>
+                <form onsubmit="handleUserSubmit(event)">
+                    <div class="form-group">
+                        <label for="user-fullname">Full Name</label>
+                        <input type="text" id="user-fullname" placeholder="Enter full name" required>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="user-age">Age</label>
+                            <input type="number" id="user-age" placeholder="Enter age" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-aadhar">Aadhar Number</label>
+                            <input type="text" id="user-aadhar" placeholder="Enter Aadhar number" required>
+                        </div>
+                    </div>
+                    <button type="submit">Generate Encrypted Credentials</button>
+                    <div class="output-box" id="user-output">
+                        <h3>Generated Credentials</h3>
+                        <pre id="user-result"></pre>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Institution Mode -->
+        <div id="institution-mode" class="mode-content">
+            <h2>Institution Portal</h2>
+            
+            <!-- Login Screen -->
+            <div id="inst-auth" class="auth-screen active">
+                <div id="inst-login" class="auth-form active">
+                    <h3>Login</h3>
+                    <div id="inst-login-msg"></div>
+                    <form onsubmit="handleInstLogin(event)">
+                        <div class="form-group">
+                            <label for="inst-login-username">Institution Username</label>
+                            <input type="text" id="inst-login-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inst-login-password">Institution Password</label>
+                            <input type="password" id="inst-login-password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Login</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Don't have an account? <a onclick="toggleInstAuth()">Sign Up</a>
+                    </div>
+                </div>
+
+                <div id="inst-signup" class="auth-form" style="display: none;">
+                    <h3>Create Institution Account</h3>
+                    <div id="inst-signup-msg"></div>
+                    <form onsubmit="handleInstSignup(event)">
+                        <div class="form-group">
+                            <label for="inst-signup-username">Institution Username</label>
+                            <input type="text" id="inst-signup-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inst-signup-password">Institution Password</label>
+                            <input type="password" id="inst-signup-password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Sign Up</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Already have an account? <a onclick="toggleInstAuth()">Login</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Screen -->
+            <div id="inst-main" class="main-screen">
+                <div class="success-msg">Logged in as <strong id="inst-logged-username"></strong> | <a href="#" onclick="logoutInst()" style="color: #2e7d32; font-weight: 600;">Logout</a></div>
+                <form onsubmit="handleInstitutionSubmit(event)">
+                    <div class="form-group">
+                        <label for="inst-name">Name</label>
+                        <input type="text" id="inst-name" placeholder="Enter name" required>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="inst-age">Age</label>
+                            <input type="number" id="inst-age" placeholder="Enter age" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inst-aadhar">Aadhar Number</label>
+                            <input type="text" id="inst-aadhar" placeholder="Enter Aadhar number" required>
+                        </div>
+                    </div>
+                    <button type="submit">Issue Credential</button>
+                    <div class="output-box" id="institution-output">
+                        <h3>Issued Credential</h3>
+                        <pre id="institution-result"></pre>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Third Party Mode -->
+        <div id="thirdparty-mode" class="mode-content">
+            <h2>Third Party Verifier</h2>
+            
+            <!-- Login Screen -->
+            <div id="tp-auth" class="auth-screen active">
+                <div id="tp-login" class="auth-form active">
+                    <h3>Login</h3>
+                    <div id="tp-login-msg"></div>
+                    <form onsubmit="handleTpLogin(event)">
+                        <div class="form-group">
+                            <label for="tp-login-username">Verifier Username</label>
+                            <input type="text" id="tp-login-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tp-login-password">Verifier Password</label>
+                            <input type="password" id="tp-login-password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Login</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Don't have an account? <a onclick="toggleTpAuth()">Sign Up</a>
+                    </div>
+                </div>
+
+                <div id="tp-signup" class="auth-form" style="display: none;">
+                    <h3>Create Verifier Account</h3>
+                    <div id="tp-signup-msg"></div>
+                    <form onsubmit="handleTpSignup(event)">
+                        <div class="form-group">
+                            <label for="tp-signup-username">Verifier Username</label>
+                            <input type="text" id="tp-signup-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tp-signup-password">Verifier Password</label>
+                            <input type="password" id="tp-signup-password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Sign Up</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Already have an account? <a onclick="toggleTpAuth()">Login</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Screen -->
+            <div id="tp-main" class="main-screen">
+                <div class="success-msg">Logged in as <strong id="tp-logged-username"></strong> | <a href="#" onclick="logoutTp()" style="color: #2e7d32; font-weight: 600;">Logout</a></div>
+                <form onsubmit="handleThirdPartySubmit(event)">
+                    <div class="form-group">
+                        <label for="tp-name-public">Name - Public Key</label>
+                        <input type="text" id="tp-name-public" placeholder="Enter Name Public Key" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tp-name-private">Name - Private Key</label>
+                        <input type="text" id="tp-name-private" placeholder="Enter Name Private Key" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tp-age-public">Age - Public Key</label>
+                        <input type="text" id="tp-age-public" placeholder="Enter Age Public Key" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tp-age-private">Age - Private Key</label>
+                        <input type="text" id="tp-age-private" placeholder="Enter Age Private Key" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tp-aadhar-public">Aadhar - Public Key</label>
+                        <input type="text" id="tp-aadhar-public" placeholder="Enter Aadhar Public Key" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tp-aadhar-private">Aadhar - Private Key</label>
+                        <input type="text" id="tp-aadhar-private" placeholder="Enter Aadhar Private Key" required>
+                    </div>
+                    <button type="submit">Verify Credential</button>
+                    <div class="output-box" id="thirdparty-output">
+                        <h3>Verification Result</h3>
+                        <pre id="thirdparty-result"></pre>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global storage for usernames (simulating a database)
+        let registeredUsers = {
+            user: [],
+            institution: [],
+            thirdparty: []
+        };
+
+        let currentUser = {
+            user: null,
+            institution: null,
+            thirdparty: null
+        };
+
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.mode-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(mode + '-mode').classList.add('active');
+
+            document.querySelectorAll('.output-box').forEach(box => {
+                box.classList.remove('show');
+            });
+        }
+
+        // USER FUNCTIONS
+        function toggleUserAuth() {
+            const login = document.getElementById('user-login');
+            const signup = document.getElementById('user-signup');
+            if (login.style.display === 'none') {
+                login.style.display = 'block';
+                signup.style.display = 'none';
+            } else {
+                login.style.display = 'none';
+                signup.style.display = 'block';
+            }
+            document.getElementById('user-login-msg').innerHTML = '';
+            document.getElementById('user-signup-msg').innerHTML = '';
+        }
+
+        function handleUserSignup(e) {
+            e.preventDefault();
+            const username = document.getElementById('user-signup-username').value;
+            const password = document.getElementById('user-signup-password').value;
+            
+            if (registeredUsers.user.includes(username)) {
+                document.getElementById('user-signup-msg').innerHTML = '<div class="error-msg">Username already exists. Please choose another.</div>';
+                return;
+            }
+            
+            registeredUsers.user.push(username);
+            document.getElementById('user-signup-msg').innerHTML = '<div class="success-msg">Account created successfully! Please login.</div>';
+            setTimeout(() => {
+                toggleUserAuth();
+            }, 1500);
+        }
+
+        function handleUserLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('user-login-username').value;
+            const password = document.getElementById('user-login-password').value;
+            
+            if (!registeredUsers.user.includes(username)) {
+                document.getElementById('user-login-msg').innerHTML = '<div class="error-msg">Username not found. Please sign up first.</div>';
+                return;
+            }
+            
+            currentUser.user = username;
+            document.getElementById('user-logged-username').textContent = username;
+            document.getElementById('user-auth').classList.remove('active');
+            document.getElementById('user-main').classList.add('active');
+        }
+
+        function logoutUser() {
+            currentUser.user = null;
+            document.getElementById('user-auth').classList.add('active');
+            document.getElementById('user-main').classList.remove('active');
+            document.getElementById('user-login-username').value = '';
+            document.getElementById('user-login-password').value = '';
+            document.getElementById('user-output').classList.remove('show');
+        }
+
+        function handleUserSubmit(e) {
+            e.preventDefault();
+            const fullname = document.getElementById('user-fullname').value;
+            const age = document.getElementById('user-age').value;
+            const aadhar = document.getElementById('user-aadhar').value;
+            
+            const credential = { fullname, age, aadhar, user: currentUser.user };
+            const encrypted = btoa(JSON.stringify(credential));
+            const key = 'USER_KEY_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            
+            const output = document.getElementById('user-output');
+            const result = document.getElementById('user-result');
+            result.textContent = `Encrypted Data: ${encrypted}\n\nYour Decryption Key: ${key}\n\⚠️ Store this key securely! You'll need it to share your credentials.`;
+            output.classList.add('show');
+        }
+
+        // INSTITUTION FUNCTIONS
+        function toggleInstAuth() {
+            const login = document.getElementById('inst-login');
+            const signup = document.getElementById('inst-signup');
+            if (login.style.display === 'none') {
+                login.style.display = 'block';
+                signup.style.display = 'none';
+            } else {
+                login.style.display = 'none';
+                signup.style.display = 'block';
+            }
+            document.getElementById('inst-login-msg').innerHTML = '';
+            document.getElementById('inst-signup-msg').innerHTML = '';
+        }
+
+        function handleInstSignup(e) {
+            e.preventDefault();
+            const username = document.getElementById('inst-signup-username').value;
+            const password = document.getElementById('inst-signup-password').value;
+            
+            if (registeredUsers.institution.includes(username)) {
+                document.getElementById('inst-signup-msg').innerHTML = '<div class="error-msg">Username already exists. Please choose another.</div>';
+                return;
+            }
+            
+            registeredUsers.institution.push(username);
+            document.getElementById('inst-signup-msg').innerHTML = '<div class="success-msg">Account created successfully! Please login.</div>';
+            setTimeout(() => {
+                toggleInstAuth();
+            }, 1500);
+        }
+
+        function handleInstLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('inst-login-username').value;
+            const password = document.getElementById('inst-login-password').value;
+            
+            if (!registeredUsers.institution.includes(username)) {
+                document.getElementById('inst-login-msg').innerHTML = '<div class="error-msg">Username not found. Please sign up first.</div>';
+                return;
+            }
+            
+            currentUser.institution = username;
+            document.getElementById('inst-logged-username').textContent = username;
+            document.getElementById('inst-auth').classList.remove('active');
+            document.getElementById('inst-main').classList.add('active');
+        }
+
+        function logoutInst() {
+            currentUser.institution = null;
+            document.getElementById('inst-auth').classList.add('active');
+            document.getElementById('inst-main').classList.remove('active');
+            document.getElementById('inst-login-username').value = '';
+            document.getElementById('inst-login-password').value = '';
+            document.getElementById('institution-output').classList.remove('show');
+        }
+
+        function handleInstitutionSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('inst-name').value;
+            const age = document.getElementById('inst-age').value;
+            const aadhar = document.getElementById('inst-aadhar').value;
+            
+            const credential = {
+                name: name,
+                age: age,
+                aadhar: aadhar,
+                issuedBy: currentUser.institution,
+                timestamp: new Date().toISOString()
+            };
+            
+            const encrypted = btoa(JSON.stringify(credential));
+            const key = 'INST_KEY_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            
+            const output = document.getElementById('institution-output');
+            const result = document.getElementById('institution-result');
+            result.textContent = `✅ Credential Successfully Issued\n\nEncrypted Credential:\n${encrypted}\n\nIssue Key:\n${key}\n\nProvide both to the credential holder.`;
+            output.classList.add('show');
+        }
+
+        // THIRD PARTY FUNCTIONS
+        function toggleTpAuth() {
+            const login = document.getElementById('tp-login');
+            const signup = document.getElementById('tp-signup');
+            if (login.style.display === 'none') {
+                login.style.display = 'block';
+                signup.style.display = 'none';
+            } else {
+                login.style.display = 'none';
+                signup.style.display = 'block';
+            }
+            document.getElementById('tp-login-msg').innerHTML = '';
+            document.getElementById('tp-signup-msg').innerHTML = '';
+        }
+
+        function handleTpSignup(e) {
+            e.preventDefault();
+            const username = document.getElementById('tp-signup-username').value;
+            const password = document.getElementById('tp-signup-password').value;
+            
+            if (registeredUsers.thirdparty.includes(username)) {
+                document.getElementById('tp-signup-msg').innerHTML = '<div class="error-msg">Username already exists. Please choose another.</div>';
+                return;
+            }
+            
+            registeredUsers.thirdparty.push(username);
+            document.getElementById('tp-signup-msg').innerHTML = '<div class="success-msg">Account created successfully! Please login.</div>';
+            setTimeout(() => {
+                toggleTpAuth();
+            }, 1500);
+        }
+
+        function handleTpLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('tp-login-username').value;
+            const password = document.getElementById('tp-login-password').value;
+            
+            if (!registeredUsers.thirdparty.includes(username)) {
+                document.getElementById('tp-login-msg').innerHTML = '<div class="error-msg">Username not found. Please sign up first.</div>';
+                return;
+            }
+            
+            currentUser.thirdparty = username;
+            document.getElementById('tp-logged-username').textContent = username;
+            document.getElementById('tp-auth').classList.remove('active');
+            document.getElementById('tp-main').classList.add('active');
+        }
+
+        function logoutTp() {
+            currentUser.thirdparty = null;
+            document.getElementById('tp-auth').classList.add('active');
+            document.getElementById('tp-main').classList.remove('active');
+            document.getElementById('tp-login-username').value = '';
+            document.getElementById('tp-login-password').value = '';
+            document.getElementById('thirdparty-output').classList.remove('show');
+        }
+
+        function handleThirdPartySubmit(e) {
+            e.preventDefault();
+            // Collect all fields for public/private keys
+            const namePublic = document.getElementById('tp-name-public').value;
+            const namePrivate = document.getElementById('tp-name-private').value;
+            const agePublic = document.getElementById('tp-age-public').value;
+            const agePrivate = document.getElementById('tp-age-private').value;
+            const aadharPublic = document.getElementById('tp-aadhar-public').value;
+            const aadharPrivate = document.getElementById('tp-aadhar-private').value;
+
+            const output = document.getElementById('thirdparty-output');
+            const result = document.getElementById('thirdparty-result');
+            result.textContent = 
+                `Name Public Key: ${namePublic}\n` +
+                `Name Private Key: ${namePrivate}\n\n` +
+                `Age Public Key: ${agePublic}\n` +
+                `Age Private Key: ${agePrivate}\n\n` +
+                `Aadhar Public Key: ${aadharPublic}\n` +
+                `Aadhar Private Key: ${aadharPrivate}\n\n` +
+                `Verified By: ${currentUser.thirdparty}\nVerification Time: ${new Date().toLocaleString()}`;
+            output.classList.add('show');
+        }
+    </script>
+</body>
+</html>
