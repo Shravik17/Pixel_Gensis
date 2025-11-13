@@ -32,6 +32,16 @@ class Block:
     def __str__(self):
         return f"Block #{self.index} | Hash: {self.hash[:16]}..."
 
+    def to_dict(self):
+        """Return a serializable representation of the block."""
+        return {
+            "index": self.index,
+            "timestamp": str(self.timestamp),
+            "data": self.data,
+            "previous_hash": self.previous_hash,
+            "hash": self.hash
+        }
+
 
 class IdentityBlockchain:
     """Blockchain for storing identity credential hashes"""
@@ -113,6 +123,14 @@ class IdentityBlockchain:
             print(f"  Hash: {block.hash}")
             print(f"  Previous: {block.previous_hash}")
             print("-"*70)
+
+    def to_json_file(self, filepath):
+        """Save the blockchain to a JSON file."""
+        # Chain as list of dicts
+        chain_as_dicts = [block.to_dict() for block in self.chain]
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(chain_as_dicts, f, indent=2)
+        print(f"✓ Blockchain saved to {filepath}")
 
 
 def load_public_keys_from_csv(csv_path, fields):
@@ -220,3 +238,6 @@ if __name__ == "__main__":
 
     # Display blockchain (showing encrypted values)
     blockchain.display_chain()
+
+    # Save blockchain to JSON file
+    blockchain.to_json_file("blockchain.json")
