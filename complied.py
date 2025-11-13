@@ -68,25 +68,7 @@ HTML_TEMPLATE = """
     {% endwith %}
     {% if mode == 'user' %}
       <h2>User Portal</h2>
-      <form method="post" action="{{ url_for('register_identity') }}">
-        <div class="form-group">
-          <label for="user_id">Username</label>
-          <input type="text" name="user_id" id="user_id" required>
-        </div>
-        <div class="form-group">
-          <label for="name">Full Name</label>
-          <input type="text" name="name" id="name" required>
-        </div>
-        <div class="form-group">
-          <label for="age">Age</label>
-          <input type="number" name="age" id="age" required>
-        </div>
-        <div class="form-group">
-          <label for="aadhar">Aadhar Number</label>
-          <input type="text" name="aadhar" id="aadhar" required>
-        </div>
-        <button type="submit">Register & Encrypt Identity</button>
-      </form>
+      {# Removed registration fields and button below as per instructions #}
       <form method="post" action="{{ url_for('generate_keys') }}" style="margin-top:24px;">
         <button type="submit">Generate Public/Private Key Pairs</button>
       </form>
