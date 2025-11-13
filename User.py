@@ -14,3 +14,19 @@ for label in ['name', 'age', 'aadhar']:
         'private_key': private_key,
         'public_key': public_key,
     }
+for label, keys in key_pairs.items():
+    print(f"Label: {label}")
+    priv_pem = keys['private_key'].private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+    pub_pem = keys['public_key'].public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    print("Private Key:")
+    print(priv_pem.decode('utf-8'))
+    print("Public Key:")
+    print(pub_pem.decode('utf-8'))
+    print("------")
