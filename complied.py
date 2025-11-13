@@ -2,6 +2,9 @@ import hashlib
 import json
 from datetime import datetime
 import csv
+import smtplib
+import random
+from email.mime.text import MIMEText
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.backends import default_backend
@@ -90,39 +93,61 @@ HTML_TEMPLATE = """
       </div>
       {% endif %}
     {% elif mode == 'institution' %}
-      <h2>Institution Portal</h2>
-      <form method="post" action="{{ url_for('institution_register') }}" enctype="multipart/form-data">
-        <div class="form-group">
-          <label for="inst_name">Name</label>
-          <input type="text" name="inst_name" id="inst_name" required>
-        </div>
-        <div class="form-group">
-          <label for="inst_age">Age</label>
-          <input type="number" name="inst_age" id="inst_age" required>
-        </div>
-        <div class="form-group">
-          <label for="inst_aadhar">Aadhar Number</label>
-          <input type="text" name="inst_aadhar" id="inst_aadhar" required>
-        </div>
-        <div class="form-group">
-          <label for="keys_file">Upload keys.csv (Public Keys)</label>
-          <input type="file" name="keys_file" id="keys_file" accept=".csv" required>
-        </div>
-        <button type="submit">Register Identity (Institution)</button>
-      </form>
-      <form method="get" action="{{ url_for('verify_chain') }}" style="margin-top:20px;">
-        <button type="submit">Verify Blockchain</button>
-      </form>
-      {% if inst_registered %}
-      <div class="output-box">
-        <h4>✓ Encrypted credentials registered on blockchain (via Institution).</h4>
-        <strong>Encrypted Vault (Base64 fields):</strong>
-        <pre style="font-size:0.99em;">{{ inst_vault | tojson(indent=2) }}</pre>
-      </div>
-      {% endif %}
-      {% if result_checked %}
-        <div class="output-box"><strong>{{ result_msg }}</strong></div>
-      {% endif %}
+        {# --- OTP EMAIL VERIFICATION UI ADDED --- #}
+        {% if not session.get('institution_otp_verified') %}
+            <h2>Institution OTP Verification</h2>
+            {% if not session.get('institution_otp_sent') %}
+                <form method="post" action="{{ url_for('send_institution_otp') }}">
+                    <div class="form-group">
+                        <label for="institution_email">Enter your institution email address</label>
+                        <input type="text" name="institution_email" id="institution_email" required>
+                    </div>
+                    <button type="submit">Send OTP</button>
+                </form>
+            {% else %}
+                <form method="post" action="{{ url_for('verify_institution_otp') }}">
+                    <div class="form-group">
+                        <label for="institution_otp">Enter the OTP sent to your email</label>
+                        <input type="text" name="institution_otp" id="institution_otp" required>
+                    </div>
+                    <button type="submit">Verify OTP</button>
+                </form>
+            {% endif %}
+        {% else %}
+          <h2>Institution Portal</h2>
+          <form method="post" action="{{ url_for('institution_register') }}" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="inst_name">Name</label>
+              <input type="text" name="inst_name" id="inst_name" required>
+            </div>
+            <div class="form-group">
+              <label for="inst_age">Age</label>
+              <input type="number" name="inst_age" id="inst_age" required>
+            </div>
+            <div class="form-group">
+              <label for="inst_aadhar">Aadhar Number</label>
+              <input type="text" name="inst_aadhar" id="inst_aadhar" required>
+            </div>
+            <div class="form-group">
+              <label for="keys_file">Upload keys.csv (Public Keys)</label>
+              <input type="file" name="keys_file" id="keys_file" accept=".csv" required>
+            </div>
+            <button type="submit">Register Identity (Institution)</button>
+          </form>
+          <form method="get" action="{{ url_for('verify_chain') }}" style="margin-top:20px;">
+            <button type="submit">Verify Blockchain</button>
+          </form>
+          {% if inst_registered %}
+          <div class="output-box">
+            <h4>✓ Encrypted credentials registered on blockchain (via Institution).</h4>
+            <strong>Encrypted Vault (Base64 fields):</strong>
+            <pre style="font-size:0.99em;">{{ inst_vault | tojson(indent=2) }}</pre>
+          </div>
+          {% endif %}
+          {% if result_checked %}
+            <div class="output-box"><strong>{{ result_msg }}</strong></div>
+          {% endif %}
+        {% endif %}
     {% elif mode == 'view' %}
       <h2>Blockchain: All Registered Identities</h2>
       <div style="max-height: 400px; overflow:auto;">
@@ -395,6 +420,28 @@ def decrypt_identity(encrypted_vault, private_keys):
 # --------------------
 # Flask App
 # --------------------
+def send_otp_email(receiver_email, otp):
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = "shr.otp.verify@gmail.com"
+    sender_pass = "qsbu ulor shwf pvkt"
+    subject = "Your MinchiLocker OTP Verification Code"
+    msg_body = f"Your OTP code for institution login is: {otp}\n\nPlease use this OTP within the next 5 minutes."
+    msg = MIMEText(msg_body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_pass)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"OTP sending failed: {e}")
+        return False
+
 def create_app():
     app = Flask(__name__)
     app.secret_key = "blockchain-webapp-demo-2024"  # Set to secure value in prod
@@ -414,6 +461,16 @@ def create_app():
     @app.route("/", methods=['GET'])
     def index():
         mode = request.args.get('mode', 'user').lower()
+
+        # If accessing institution page, do not allow unless OTP is verified
+        if mode == "institution":
+            if not session.get("institution_otp_verified"):
+                # Remove any prior registration info so it doesn't appear
+                session.pop('inst_registered', None)
+                session.pop('inst_vault', None)
+                session.pop('result_checked', None)
+                session.pop('result_msg', None)
+
         registered = session.pop('registered', None)
         keygen_success = session.pop('keygen_success', None)
         result_checked = session.pop('result_checked', None)
@@ -427,6 +484,10 @@ def create_app():
         verified_user_id = session.pop('verified_user_id', None)
 
         chain = blockchain.to_json() if mode == "view" else []
+
+        # For institution OTP UI rendering in template, ensure keys visible for Jinja
+        session.modified = True
+
         return render_template_string(
             HTML_TEMPLATE,
             mode=mode,
@@ -440,8 +501,68 @@ def create_app():
             chain=chain,
             verified_identity=verified_identity,
             verify_error=verify_error,
-            verified_user_id=verified_user_id
+            verified_user_id=verified_user_id,
+            session=session  # pass session for template logic
         )
+
+    @app.route("/send_institution_otp", methods=['POST'])
+    def send_institution_otp():
+        email = request.form.get('institution_email', '').strip()
+        if not email:
+            flash("Email is required.", "error")
+            return redirect(url_for('index', mode='institution'))
+        otp = "{:06d}".format(random.randint(0, 999999))
+        email_sent = send_otp_email(email, otp)
+        if not email_sent:
+            flash("Failed to send OTP. Please contact admin or try again.", "error")
+            return redirect(url_for('index', mode='institution'))
+        session['institution_otp'] = otp
+        session['institution_email'] = email
+        session['institution_otp_sent'] = True
+        flash(f"OTP sent to {email}. Please check your inbox/spam!", "success")
+        return redirect(url_for('index', mode='institution'))
+
+    @app.route("/verify_institution_otp", methods=['POST'])
+    def verify_institution_otp():
+        stored_otp = session.get("institution_otp")
+        entered_otp = request.form.get("institution_otp", "").strip()
+        if not (stored_otp and entered_otp):
+            flash("OTP is required.", "error")
+            return redirect(url_for('index', mode='institution'))
+        if entered_otp == stored_otp:
+            session['institution_otp_verified'] = True
+            # Clear OTP from session for security
+            session.pop('institution_otp')
+            session.pop('institution_otp_sent', None)
+            flash("OTP verified! Access granted to Institution Portal.", "success")
+            return redirect(url_for('index', mode='institution'))
+        else:
+            flash("Incorrect OTP. Please try again.", "error")
+            return redirect(url_for('index', mode='institution'))
+
+    @app.route("/institution_register", methods=['POST'])
+    def institution_register():
+        # Institution registration accessible only after otp verification
+        if not session.get("institution_otp_verified"):
+            flash("OTP verification is required to access Institution features.", "error")
+            return redirect(url_for('index', mode='institution'))
+        name = request.form.get("inst_name", "").strip()
+        age = request.form.get("inst_age", "").strip()
+        aadhar = request.form.get("inst_aadhar", "").strip()
+        keys_file = request.files.get("keys_file")
+        if not (name and age and aadhar and keys_file):
+            flash("All fields and keys.csv are required.", "error")
+            return redirect(url_for('index', mode='institution'))
+        try:
+            keys_file.stream.seek(0)
+            csvfile = StringIO(keys_file.stream.read().decode("utf-8"))
+            block, vault_data = institution_register_data(blockchain, name, age, aadhar, csvfile)
+            session['inst_registered'] = True
+            session['inst_vault'] = vault_data
+            flash(f"Identity registered on blockchain via institution.", "success")
+        except Exception as e:
+            flash(f"Error in institution registration: {str(e)}", "error")
+        return redirect(url_for('index', mode='institution'))
 
     @app.route("/register", methods=['POST'])
     def register_identity():
@@ -516,28 +637,12 @@ def create_app():
         response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
 
-    @app.route("/institution_register", methods=['POST'])
-    def institution_register():
-        name = request.form.get("inst_name", "").strip()
-        age = request.form.get("inst_age", "").strip()
-        aadhar = request.form.get("inst_aadhar", "").strip()
-        keys_file = request.files.get("keys_file")
-        if not (name and age and aadhar and keys_file):
-            flash("All fields and keys.csv are required.", "error")
-            return redirect(url_for('index', mode='institution'))
-        try:
-            keys_file.stream.seek(0)
-            csvfile = StringIO(keys_file.stream.read().decode("utf-8"))
-            block, vault_data = institution_register_data(blockchain, name, age, aadhar, csvfile)
-            session['inst_registered'] = True
-            session['inst_vault'] = vault_data
-            flash(f"Identity registered on blockchain via institution.", "success")
-        except Exception as e:
-            flash(f"Error in institution registration: {str(e)}", "error")
-        return redirect(url_for('index', mode='institution'))
-
     @app.route("/verify", methods=['GET'])
     def verify_chain():
+        # OTP-protect institution verify page also
+        if not session.get("institution_otp_verified"):
+            flash("OTP verification is required to access Institution features.", "error")
+            return redirect(url_for('index', mode='institution'))
         valid, msg = blockchain.verify_chain()
         session['result_checked'] = True
         session['result_msg'] = msg
