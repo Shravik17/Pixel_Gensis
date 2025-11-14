@@ -1,7 +1,6 @@
 Flask
 cryptography
 datetime
-csv
 smtplib
 random
 email.mime.text
