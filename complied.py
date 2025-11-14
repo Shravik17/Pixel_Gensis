@@ -420,11 +420,24 @@ def decrypt_identity(encrypted_vault, private_keys):
 # --------------------
 # Flask App
 # --------------------
+def get_sender_email_credentials_from_file():
+    # Reads sender email and password from pass.txt
+    # Format: Line 1 = sender email, Line 2 = sender password
+    try:
+        with open("pass.txt", "r") as f:
+            lines = f.readlines()
+            sender_email = lines[0].strip()
+            sender_pass = lines[1].strip()
+            return sender_email, sender_pass
+    except Exception as e:
+        print(f"ERROR: Unable to read sender email and password from pass.txt: {e}")
+        # Provide default or dummy credentials if file isn't there, for compatibility
+        return "shr.otp.verify@gmail.com", "qsbu ulor shwf pvkt"
+
 def send_otp_email(receiver_email, otp):
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    sender_email = "shr.otp.verify@gmail.com"
-    sender_pass = "qsbu ulor shwf pvkt"
+    sender_email, sender_pass = get_sender_email_credentials_from_file()
     subject = "Your MinchiLocker OTP Verification Code"
     msg_body = f"Your OTP code for institution login is: {otp}\n\nPlease use this OTP within the next 5 minutes."
     msg = MIMEText(msg_body)
