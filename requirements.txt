@@ -1,6 +1,5 @@
 Flask
 cryptography
-hashlib
 json
 datetime
 csv
