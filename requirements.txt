@@ -1,7 +1,6 @@
 Flask
 cryptography
 datetime
-smtplib
 random
 email.mime.text
 cryptography.hazmat.primitives.asymmetric
