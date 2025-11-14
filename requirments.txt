@@ -1,0 +1,15 @@
+Flask
+cryptography
+hashlib
+json
+datetime
+csv
+smtplib
+random
+email.mime.text
+cryptography.hazmat.primitives.asymmetric
+cryptography.hazmat.primitives
+cryptography.hazmat.backends
+base64
+os
+io
